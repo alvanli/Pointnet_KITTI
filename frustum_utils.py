@@ -139,6 +139,22 @@ def class2angle(pred_cls, residual, num_class, to_label_format=True):
     return angle
 
 
+def size2class(size, type_name):
+    ''' Convert 3D bounding box size to template class and residuals.
+    todo (rqi): support multiple size clusters per type.
+
+    Input:
+        size: numpy array of shape (3,) for (l,w,h)
+        type_name: string
+    Output:
+        size_class: int scalar
+        size_residual: numpy array of shape (3,)
+    '''
+    size_class = g_type2class[type_name]
+    size_residual = size - g_type_mean_size[type_name]
+    return size_class, size_residual
+
+
 def class2size(pred_cls, residual):
     ''' Inverse function to size2class. '''
     mean_size = g_type_mean_size[g_class2type[pred_cls]]
