@@ -32,7 +32,7 @@ train_sets = "train"
 val_sets = "val"
 objtype = "carpedcyc"
 num_classes = 2
-
+use_cuda = True
 
 opt.manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", manual_seed)
@@ -68,6 +68,8 @@ except OSError:
 blue = lambda x: '\033[94m' + x + '\033[0m'
 
 classifier = PointNetDenseCls(k=num_classes, feature_transform=opt.feature_transform)
+if use_cuda:
+    classifier.cuda()
 
 if opt.model != '':
     classifier.load_state_dict(torch.load(opt.model))
@@ -104,7 +106,8 @@ for epoch in range(epochs):
 
         points = batch_data.transpose(2, 1)[:,:3,:]  # [bs, 3, n]
         target = batch_label # [bs, n]
-        # points, target = points.cuda(), target.cuda()
+        if use_cuda:
+            points, target = points.cuda(), target.cuda()
         optimizer.zero_grad()
 
         classifier = classifier.train()
