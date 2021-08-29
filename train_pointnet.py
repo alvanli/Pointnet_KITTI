@@ -98,7 +98,7 @@ for epoch in range(epochs):
     losses = 0
     pt_accs = 0
     total_data = 0
-    for i, data in tqdm(enumerate(train_dataloader, 0)):
+    for i, data in tqdm(enumerate(train_dataloader, 0), total=len(train_dataloader)):
         batch_data, batch_label, batch_center, \
         batch_hclass, batch_hres, \
         batch_sclass, batch_sres, \
