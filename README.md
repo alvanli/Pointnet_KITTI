@@ -4,4 +4,4 @@
 - Pointnet is from https://github.com/fxia22/pointnet.pytorch
 
 To run:
-- `python3 train_pointnet.py --max_epoch 2`
+- `python3 train_pointnet.py`
