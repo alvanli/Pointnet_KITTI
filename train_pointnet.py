@@ -14,13 +14,6 @@ import numpy as np
 from frustum_utils import get_bounding_box, from_prediction_to_label_format, get_3d_box, box3d_iou, FrustumDataset
 import time
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--outf', type=str, default='seg', help='output folder')
-parser.add_argument('--model', type=str, default='', help='model path')
-parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
-
-opt = parser.parse_args()
-print(opt)
 
 manual_seed = 42
 class_choice = "Car"
@@ -32,26 +25,26 @@ train_sets = "train"
 val_sets = "val"
 objtype = "carpedcyc"
 num_classes = 2
-use_cuda = True
+use_cuda = False
+feature_transform = True
 
-opt.manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", manual_seed)
 random.seed(manual_seed)
 torch.manual_seed(manual_seed)
 
-# TRAIN_DATASET = FrustumDataset(npoints=NUM_POINT, split=train_sets,
-#     rotate_to_center=True, random_flip=True, random_shift=True, one_hot=True,
-#     overwritten_data_path='/home/aldec/Data/WAT/kitti/kitti/frustum_'+objtype+'_'+train_sets+'.pickle')
-# TEST_DATASET = FrustumDataset(npoints=NUM_POINT, split=val_sets,
-#     rotate_to_center=True, one_hot=True,
-#     overwritten_data_path='/home/aldec/Data/WAT/kitti/kitti/frustum_'+objtype+'_'+val_sets+'.pickle')
-
 TRAIN_DATASET = FrustumDataset(npoints=NUM_POINT, split=train_sets,
     rotate_to_center=True, random_flip=True, random_shift=True, one_hot=True,
-    overwritten_data_path='/mnt/wato-drive/KITTI/pickle/frustum_'+objtype+'_'+train_sets+'.pickle')
+    overwritten_data_path='/home/aldec/Data/WAT/kitti/kitti/frustum_'+objtype+'_'+train_sets+'.pickle')
 TEST_DATASET = FrustumDataset(npoints=NUM_POINT, split=val_sets,
     rotate_to_center=True, one_hot=True,
-    overwritten_data_path='/mnt/wato-drive/KITTI/pickle/frustum_'+objtype+'_'+val_sets+'.pickle')
+    overwritten_data_path='/home/aldec/Data/WAT/kitti/kitti/frustum_'+objtype+'_'+val_sets+'.pickle')
+
+# TRAIN_DATASET = FrustumDataset(npoints=NUM_POINT, split=train_sets,
+#     rotate_to_center=True, random_flip=True, random_shift=True, one_hot=True,
+#     overwritten_data_path='/mnt/wato-drive/KITTI/pickle/frustum_'+objtype+'_'+train_sets+'.pickle')
+# TEST_DATASET = FrustumDataset(npoints=NUM_POINT, split=val_sets,
+#     rotate_to_center=True, one_hot=True,
+#     overwritten_data_path='/mnt/wato-drive/KITTI/pickle/frustum_'+objtype+'_'+val_sets+'.pickle')
 
 train_dataloader = DataLoader(TRAIN_DATASET, batch_size=BATCH_SIZE, shuffle=True,\
                                 num_workers=8, pin_memory=True)
@@ -60,19 +53,15 @@ test_dataloader = DataLoader(TEST_DATASET, batch_size=BATCH_SIZE, shuffle=False,
 
 print(len(train_dataloader), len(test_dataloader))
 
-try:
-    os.makedirs(opt.outf)
-except OSError:
-    pass
 
 blue = lambda x: '\033[94m' + x + '\033[0m'
 
-classifier = PointNetDenseCls(k=num_classes, feature_transform=opt.feature_transform)
+classifier = PointNetDenseCls(k=num_classes, feature_transform=feature_transform)
 if use_cuda:
     classifier.cuda()
 
-if opt.model != '':
-    classifier.load_state_dict(torch.load(opt.model))
+if not use_cuda:
+    classifier.load_state_dict(torch.load("log/seg/seg_model_Car_2.pth", map_location= torch.device('cpu')))
 
 optimizer = optim.Adam(classifier.parameters(), lr=0.001, betas=(0.9, 0.999))
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
@@ -117,7 +106,7 @@ for epoch in range(epochs):
         target = target.view(-1, 1)[:, 0] #- 1
         # print(pred.size(), target.size())
         loss = F.nll_loss(pred_all, target.long())
-        if opt.feature_transform:
+        if feature_transform:
             loss += feature_transform_regularizer(trans_feat) * 0.001
         loss.backward()
         optimizer.step()
@@ -155,5 +144,5 @@ for epoch in range(epochs):
     log_string('train loss: %f' % (losses/total_data))
     log_string('train accuracy: %f' % (pt_accs/total_data))
     scheduler.step()
-    torch.save(classifier.state_dict(), '%s/seg_model_%s_%d.pth' % (opt.outf, class_choice, epoch))
+    torch.save(classifier.state_dict(), '%s/%s/seg_model_%s_%d.pth' % (LOG_DIR, NAME, class_choice, epoch))
 

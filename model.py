@@ -96,8 +96,7 @@ class PointNetfeat(nn.Module):
         self.bn3 = nn.BatchNorm1d(1024)
         self.global_feat = global_feat
         self.feature_transform = feature_transform
-        if self.feature_transform:
-            self.fstn = STNkd(k=64)
+        self.fstn = STNkd(k=64)
 
     def forward(self, x):
         n_pts = x.size()[2]
@@ -107,13 +106,12 @@ class PointNetfeat(nn.Module):
         x = x.transpose(2, 1)
         x = F.relu(self.bn1(self.conv1(x)))
 
-        if self.feature_transform:
-            trans_feat = self.fstn(x)
-            x = x.transpose(2,1)
-            x = torch.bmm(x, trans_feat)
-            x = x.transpose(2,1)
-        else:
-            trans_feat = None
+        trans_feat = self.fstn(x)
+        x = x.transpose(2,1)
+        x = torch.bmm(x, trans_feat)
+        x = x.transpose(2,1)
+        # else:
+        #     trans_feat = None
 
         pointfeat = x
         x = F.relu(self.bn2(self.conv2(x)))
