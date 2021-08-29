@@ -23,7 +23,6 @@ opt = parser.parse_args()
 print(opt)
 
 manual_seed = 42
-dataset_path = "//home//aldec//Data//WAT//shapenetcore_partanno_segmentation_benchmark_v0"
 class_choice = "Car"
 epochs = 10
 BATCH_SIZE = 32
@@ -39,6 +38,13 @@ opt.manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", manual_seed)
 random.seed(manual_seed)
 torch.manual_seed(manual_seed)
+
+# TRAIN_DATASET = FrustumDataset(npoints=NUM_POINT, split=train_sets,
+#     rotate_to_center=True, random_flip=True, random_shift=True, one_hot=True,
+#     overwritten_data_path='/home/aldec/Data/WAT/kitti/kitti/frustum_'+objtype+'_'+train_sets+'.pickle')
+# TEST_DATASET = FrustumDataset(npoints=NUM_POINT, split=val_sets,
+#     rotate_to_center=True, one_hot=True,
+#     overwritten_data_path='/home/aldec/Data/WAT/kitti/kitti/frustum_'+objtype+'_'+val_sets+'.pickle')
 
 TRAIN_DATASET = FrustumDataset(npoints=NUM_POINT, split=train_sets,
     rotate_to_center=True, random_flip=True, random_shift=True, one_hot=True,
@@ -86,34 +92,47 @@ def log_string(out_str):
 
 
 for epoch in range(epochs):
-    scheduler.step()
     log_string('Epoch [%d]' % (epoch))
+    losses = 0
+    pt_accs = 0
+    total_data = 0
     for i, data in enumerate(train_dataloader, 0):
         batch_data, batch_label, batch_center, \
         batch_hclass, batch_hres, \
         batch_sclass, batch_sres, \
         batch_rot_angle, batch_one_hot_vec = data
 
-        point = batch_data.transpose(2, 1)[:, :, :2]  # [bs, n, 4]
+        points = batch_data.transpose(2, 1)[:,:3,:]  # [bs, 3, n]
         target = batch_label # [bs, n]
         # points, target = points.cuda(), target.cuda()
         optimizer.zero_grad()
+
         classifier = classifier.train()
-        pred, trans, trans_feat = classifier(point)
-        pred = pred.view(-1, num_classes)
-        target = target.view(-1, 1)[:, 0] - 1
-        loss = F.nll_loss(pred, target)
+        pred, trans, trans_feat = classifier(points)
+        pred_all = pred.view(-1, num_classes)
+
+        target = target.view(-1, 1)[:, 0] #- 1
+        # print(pred.size(), target.size())
+        loss = F.nll_loss(pred_all, target.long())
         if opt.feature_transform:
             loss += feature_transform_regularizer(trans_feat) * 0.001
         loss.backward()
         optimizer.step()
-        pred_choice = pred.data.max(1)[1]
+        pred_choice = pred_all.data.max(1)[1]
         correct = pred_choice.eq(target.data).cpu().sum()
-        print('train loss: %f' % (loss.item()))
-        print('train accuracy: %f' % (correct.item() / float(BATCH_SIZE * NUM_POINT)))
 
-        pred_max = pred.data.max(2)[1]
-        _, pred_box_corners = get_bounding_box(point, pred_max)
+        losses += loss.item()
+        pt_accs += correct.item() / float(NUM_POINT)
+        total_data += batch_data.size()[0]
+
+        """
+        bs_box_corners = []
+        for bs_index in range(BATCH_SIZE):
+            print(pred[bs_index].size())
+            print("pred sum", torch.max(pred[bs_index].data, dim=1)[1].sum())
+            _, pred_box_corners = get_bounding_box(points[bs_index], pred[bs_index].max(1)[1])
+            bs_box_corners.append(pred_box_corners)
+
 
         batch_center = batch_center.detach().numpy()
         batch_hclass = batch_hclass.detach().numpy()
@@ -126,6 +145,12 @@ for epoch in range(epochs):
                                                                   batch_sclass[0], batch_sres[0],
                                                                   batch_rot_angle)
         box_corners_targ = get_3d_box((l, w, h), ry, (tx, ty, tz))
+
+
         iou_3d, iou_2d = box3d_iou(pred_box_corners, box_corners_targ)
+        """
+    log_string('train loss: %f' % (losses/total_data))
+    log_string('train accuracy: %f' % (pt_accs/total_data))
+    scheduler.step()
     torch.save(classifier.state_dict(), '%s/seg_model_%s_%d.pth' % (opt.outf, class_choice, epoch))
 

@@ -31,18 +31,19 @@ g_mean_size_arr = np.zeros((NUM_SIZE_CLUSTER, 3)) # size clustrs
 
 
 def get_bounding_box(points, target):
+    # points: [3, n], target: [n]
     pts_np, targ_np = points.data.numpy(), target.data.numpy()
-    obj = pts_np[:, :2, targ_np[0, :] == 1]
-    rect = cv2.minAreaRect(obj[0].transpose())
+    obj = pts_np[:2, targ_np == 1]
+    rect = cv2.minAreaRect(obj.transpose())
     box = cv2.boxPoints(rect)
     box = np.concatenate((box, box), axis=0)
 
     centre, width, angle = rect
-    max_z = np.max(pts_np[:, 2, targ_np[0, :] == 1])
-    min_z = np.min(pts_np[:, 2, targ_np[0, :] == 1])
+    max_z = np.max(pts_np[2, targ_np == 1])
+    min_z = np.min(pts_np[2, targ_np == 1])
     a = np.array([np.append(np.ones((4)) * max_z, np.ones((4)) * min_z)]).transpose()
     box = np.append(box, a, axis=1)
-    height_z = np.ptp(pts_np[:, 2, targ_np[0, :] == 1])
+    height_z = np.ptp(pts_np[2, targ_np == 1])
     centre_z = height_z / 2
     return [(centre[0], centre[1], centre_z), (width[0], width[1], height_z), angle], box
 
