@@ -3,6 +3,7 @@ import cv2
 import os
 import pickle
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
 
 NUM_SIZE_CLUSTER = 8 # one cluster for each type
