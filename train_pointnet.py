@@ -12,6 +12,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 import numpy as np
 from frustum_utils import get_bounding_box, from_prediction_to_label_format, get_3d_box, box3d_iou, FrustumDataset
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--outf', type=str, default='seg', help='output folder')
@@ -71,6 +72,9 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
 
 num_batch = len(TRAIN_DATASET) / BATCH_SIZE
 
+strtime = time.strftime('%Y-%m-%d-%H%M%S',time.localtime(time.time()))
+LOG_DIR = "log" + '/' + strtime[:13]
+if not os.path.exists(LOG_DIR): os.mkdir(LOG_DIR)
 LOG_FOUT = open(os.path.join("log", 'log_train.txt'), 'w')
 def log_string(out_str):
     LOG_FOUT.write(out_str+'\n')
