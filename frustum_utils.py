@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 import os
 import pickle
+from scipy.spatial import ConvexHull
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
@@ -43,6 +45,56 @@ def get_bounding_box(points, target):
     height_z = np.ptp(pts_np[:, 2, targ_np[0, :] == 1])
     centre_z = height_z / 2
     return [(centre[0], centre[1], centre_z), (width[0], width[1], height_z), angle], box
+
+
+def polygon_clip(subjectPolygon, clipPolygon):
+    """ Clip a polygon with another polygon.
+
+    Ref: https://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Python
+
+    Args:
+      subjectPolygon: a list of (x,y) 2d points, any polygon.
+      clipPolygon: a list of (x,y) 2d points, has to be *convex*
+    Note:
+      **points have to be counter-clockwise ordered**
+
+    Return:
+      a list of (x,y) vertex point for the intersection polygon.
+    """
+
+    def inside(p):
+        return (cp2[0] - cp1[0]) * (p[1] - cp1[1]) > (cp2[1] - cp1[1]) * (p[0] - cp1[0])
+
+    def computeIntersection():
+        dc = [cp1[0] - cp2[0], cp1[1] - cp2[1]]
+        dp = [s[0] - e[0], s[1] - e[1]]
+        n1 = cp1[0] * cp2[1] - cp1[1] * cp2[0]
+        n2 = s[0] * e[1] - s[1] * e[0]
+        n3 = 1.0 / (dc[0] * dp[1] - dc[1] * dp[0])
+        return [(n1 * dp[0] - n2 * dc[0]) * n3, (n1 * dp[1] - n2 * dc[1]) * n3]
+
+    outputList = subjectPolygon
+    cp1 = clipPolygon[-1]
+
+    for clipVertex in clipPolygon:
+        cp2 = clipVertex
+        inputList = outputList
+        outputList = []
+        s = inputList[-1]
+
+        for subjectVertex in inputList:
+            e = subjectVertex
+            if inside(e):
+                if not inside(s):
+                    outputList.append(computeIntersection())
+                outputList.append(e)
+            elif inside(s):
+                outputList.append(computeIntersection())
+            s = e
+        cp1 = cp2
+        if len(outputList) == 0:
+            return None
+    return (outputList)
 
 
 def poly_area(x,y):
@@ -137,6 +189,27 @@ def class2angle(pred_cls, residual, num_class, to_label_format=True):
     if to_label_format and angle > np.pi:
         angle = angle - 2 * np.pi
     return angle
+
+
+def angle2class(angle, num_class):
+    ''' Convert continuous angle to discrete class and residual.
+    Input:
+        angle: rad scalar, from 0-2pi (or -pi~pi), class center at
+            0, 1*(2pi/N), 2*(2pi/N) ...  (N-1)*(2pi/N)
+        num_class: int scalar, number of classes N
+    Output:
+        class_id, int, among 0,1,...,N-1
+        residual_angle: float, a number such that
+            class*(2pi/N) + residual_angle = angle
+    '''
+    angle = angle % (2 * np.pi)
+    assert (angle >= 0 and angle <= 2 * np.pi)
+    angle_per_class = 2 * np.pi / float(num_class)
+    shifted_angle = (angle + angle_per_class / 2) % (2 * np.pi)
+    class_id = int(shifted_angle / angle_per_class)
+    residual_angle = shifted_angle - \
+                     (class_id * angle_per_class + angle_per_class / 2)
+    return class_id, residual_angle
 
 
 def size2class(size, type_name):
