@@ -25,26 +25,26 @@ train_sets = "train"
 val_sets = "val"
 objtype = "carpedcyc"
 num_classes = 2
-use_cuda = False
+use_cuda = True
 feature_transform = True
 
 print("Random Seed: ", manual_seed)
 random.seed(manual_seed)
 torch.manual_seed(manual_seed)
 
-TRAIN_DATASET = FrustumDataset(npoints=NUM_POINT, split=train_sets,
-    rotate_to_center=True, random_flip=True, random_shift=True, one_hot=True,
-    overwritten_data_path='/home/aldec/Data/WAT/kitti/kitti/frustum_'+objtype+'_'+train_sets+'.pickle')
-TEST_DATASET = FrustumDataset(npoints=NUM_POINT, split=val_sets,
-    rotate_to_center=True, one_hot=True,
-    overwritten_data_path='/home/aldec/Data/WAT/kitti/kitti/frustum_'+objtype+'_'+val_sets+'.pickle')
-
 # TRAIN_DATASET = FrustumDataset(npoints=NUM_POINT, split=train_sets,
 #     rotate_to_center=True, random_flip=True, random_shift=True, one_hot=True,
-#     overwritten_data_path='/mnt/wato-drive/KITTI/pickle/frustum_'+objtype+'_'+train_sets+'.pickle')
+#     overwritten_data_path='/home/aldec/Data/WAT/kitti/kitti/frustum_'+objtype+'_'+train_sets+'.pickle')
 # TEST_DATASET = FrustumDataset(npoints=NUM_POINT, split=val_sets,
 #     rotate_to_center=True, one_hot=True,
-#     overwritten_data_path='/mnt/wato-drive/KITTI/pickle/frustum_'+objtype+'_'+val_sets+'.pickle')
+#     overwritten_data_path='/home/aldec/Data/WAT/kitti/kitti/frustum_'+objtype+'_'+val_sets+'.pickle')
+
+TRAIN_DATASET = FrustumDataset(npoints=NUM_POINT, split=train_sets,
+    rotate_to_center=True, random_flip=True, random_shift=True, one_hot=True,
+    overwritten_data_path='/mnt/wato-drive/KITTI/pickle/frustum_'+objtype+'_'+train_sets+'.pickle')
+TEST_DATASET = FrustumDataset(npoints=NUM_POINT, split=val_sets,
+    rotate_to_center=True, one_hot=True,
+    overwritten_data_path='/mnt/wato-drive/KITTI/pickle/frustum_'+objtype+'_'+val_sets+'.pickle')
 
 train_dataloader = DataLoader(TRAIN_DATASET, batch_size=BATCH_SIZE, shuffle=True,\
                                 num_workers=8, pin_memory=True)
