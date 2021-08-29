@@ -94,7 +94,7 @@ for epoch in range(epochs):
         batch_sclass, batch_sres, \
         batch_rot_angle, batch_one_hot_vec = data
 
-        point = batch_data #points.transpose(2, 1) # [bs, n, 4]
+        point = batch_data.transpose(2, 1)[:, :, :2]  # [bs, n, 4]
         target = batch_label # [bs, n]
         # points, target = points.cuda(), target.cuda()
         optimizer.zero_grad()
