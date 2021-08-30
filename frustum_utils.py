@@ -251,14 +251,36 @@ def rotate_pc_along_y(pc, rot_angle):
     return pc
 
 
+def rotate_pc_along_y(pc, rot_angle):
+    '''
+    Input:
+        pc: numpy array (N,C), first 3 channels are XYZ
+            z is facing forward, x is left ward, y is downward
+        rot_angle: rad scalar
+    Output:
+        pc: updated pc with XYZ rotated
+    '''
+    cosval = np.cos(rot_angle)
+    sinval = np.sin(rot_angle)
+    rotmat = np.array([[cosval, -sinval], [sinval, cosval]])
+    # print("pc", pc.shape)
+    # print("rotmat", np.transpose(rotmat).shape)
+    # print("pc dot", np.dot(pc[:, [0, 2]], np.transpose(rotmat)).shape)
+    pc[:, [0, 2]] = np.dot(pc[:, [0, 2]], np.transpose(rotmat))
+    return pc
+
+
 def from_prediction_to_label_format(center, angle_class, angle_res, \
                                     size_class, size_res, rot_angle):
     ''' Convert predicted box parameters to label format. '''
+    # print(center, angle_class, angle_res, size_class, size_res)
     l, w, h = class2size(size_class, size_res)
     ry = class2angle(angle_class, angle_res, NUM_HEADING_BIN) + rot_angle
-    tx, ty, tz = rotate_pc_along_y(np.expand_dims(center, 0), -rot_angle).squeeze()
+    # print("expand", np.expand_dims(center, 0), "rot_angle", rot_angle.shape)
+    # tx, ty, tz = rotate_pc_along_y(np.expand_dims(center, 0), -rot_angle).squeeze()
+
     # ty += h / 2.0
-    return h, w, l, tx, ty, tz, ry
+    return h, w, l, center[0], center[1], center[2], ry
 
 
 class FrustumDataset(object):

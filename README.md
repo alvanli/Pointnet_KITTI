@@ -5,3 +5,6 @@
 
 To run:
 - `python3 train_pointnet.py`
+
+Copy from VM
+- `scp -r wato3:/home/ch35li/alvin/Pointnet_KITTI/seg /home/aldec/Data/WAT/Just_Pointnet/log`
