@@ -139,9 +139,6 @@ def box3d_iou(corners1, corners2):
     todo (rqi): add more description on corner points' orders.
     '''
     # corner points are in counter clockwise order
-    print("corners1")
-    print(corners1)
-    print(corners1[:,0] == corners1[0, 0])
     if corners1.sum() == 0 or corners2.sum() == 0:
         return 0, 0
     try:
