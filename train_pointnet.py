@@ -127,7 +127,7 @@ def one_epoch(dataloader, classifier, best_iou3d, is_train=True):
         total_data += batch_data.size()[0]
 
         bs_box_corners = []
-        for bs_index in range(BATCH_SIZE):
+        for bs_index in range(batch_data.size()[0]):
             _, pred_box_corners = get_bounding_box(points[bs_index], pred[bs_index].max(1)[1])
             re_id = [1, 0, 4, 5, 2, 3, 7, 6]
             pred_box_corners = pred_box_corners[re_id]
