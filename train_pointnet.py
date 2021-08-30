@@ -60,8 +60,8 @@ Pointnet = PointNetDenseCls(k=num_classes, feature_transform=feature_transform)
 if use_cuda:
     Pointnet.cuda()
 
-if not use_cuda:
-    Pointnet.load_state_dict(torch.load("log/2021-08-29-19/seg_model_Car_5.pth", map_location= torch.device('cpu')))
+# if not use_cuda:
+Pointnet.load_state_dict(torch.load("log/2021-08-29-19/seg_model_Car_5.pth", map_location= torch.device('cpu')))
 
 optimizer = optim.Adam(Pointnet.parameters(), lr=0.001, betas=(0.9, 0.999))
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
@@ -69,7 +69,7 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
 
 num_batch = len(TRAIN_DATASET) / BATCH_SIZE
 
-strtime = time.strftime('%Y-%m-%d-%H%M%S',time.localtime(time.time()))
+strtime = time.strftime('%Y-%m-%d-%H%M%S', time.localtime(time.time()))
 LOG_DIR = "log"
 NAME = strtime[:13]
 
