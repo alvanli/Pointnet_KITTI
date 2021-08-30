@@ -3,7 +3,7 @@ import cv2
 import os
 import pickle
 from scipy.spatial import ConvexHull
-
+import scipy.spatial
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
@@ -142,21 +142,25 @@ def box3d_iou(corners1, corners2):
     print("corners1")
     print(corners1)
     print(corners1[:,0] == corners1[0, 0])
-    if corners1.sum() == 0 or corners2.sum() == 0 or np.all(corners1[:,0] == corners1[0, 0]) or np.all(corners1[:,1] == corners1[0,1]) or np.all(corners1[:,2] == corners1[0, 2]):
+    if corners1.sum() == 0 or corners2.sum() == 0:
         return 0, 0
-    rect1 = [(corners1[i,0], corners1[i,2]) for i in range(3,-1,-1)]
-    rect2 = [(corners2[i,0], corners2[i,2]) for i in range(3,-1,-1)]
-    area1 = poly_area(np.array(rect1)[:,0], np.array(rect1)[:,1])
-    area2 = poly_area(np.array(rect2)[:,0], np.array(rect2)[:,1])
-    inter, inter_area = convex_hull_intersection(rect1, rect2)
-    iou_2d = inter_area/(area1+area2-inter_area)
-    ymax = min(corners1[0,1], corners2[0,1])
-    ymin = max(corners1[4,1], corners2[4,1])
-    inter_vol = inter_area * max(0.0, ymax-ymin)
-    vol1 = box3d_vol(corners1)
-    vol2 = box3d_vol(corners2)
-    iou = inter_vol / (vol1 + vol2 - inter_vol)
-    return iou, iou_2d
+    try:
+        rect1 = [(corners1[i,0], corners1[i,2]) for i in range(3,-1,-1)]
+        rect2 = [(corners2[i,0], corners2[i,2]) for i in range(3,-1,-1)]
+        area1 = poly_area(np.array(rect1)[:,0], np.array(rect1)[:,1])
+        area2 = poly_area(np.array(rect2)[:,0], np.array(rect2)[:,1])
+        inter, inter_area = convex_hull_intersection(rect1, rect2)
+        iou_2d = inter_area/(area1+area2-inter_area)
+        ymax = min(corners1[0,1], corners2[0,1])
+        ymin = max(corners1[4,1], corners2[4,1])
+        inter_vol = inter_area * max(0.0, ymax-ymin)
+        vol1 = box3d_vol(corners1)
+        vol2 = box3d_vol(corners2)
+        iou = inter_vol / (vol1 + vol2 - inter_vol)
+        return iou, iou_2d
+    except scipy.spatial.qhull.QhullError:
+        return 0, 0
+
 
 def get_3d_box(box_size, heading_angle, center):
     ''' Calculate 3D bounding box corners from its parameterization.
