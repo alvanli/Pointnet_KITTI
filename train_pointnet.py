@@ -140,7 +140,7 @@ def one_epoch(dataloader, classifier, best_iou3d, is_train=True):
         batch_sres = batch_sres.detach().numpy()
         batch_rot_angle = batch_rot_angle.detach().numpy()
 
-        for bs_index in range(BATCH_SIZE):
+        for bs_index in range(batch_data.size()[0]):
             h, w, l, tx, ty, tz, ry = from_prediction_to_label_format(batch_center[bs_index],
                                                                       batch_hclass[bs_index], batch_hres[bs_index],
                                                                       batch_sclass[bs_index], batch_sres[bs_index],
