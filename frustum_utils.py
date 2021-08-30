@@ -139,6 +139,9 @@ def box3d_iou(corners1, corners2):
     todo (rqi): add more description on corner points' orders.
     '''
     # corner points are in counter clockwise order
+    print("corners1")
+    print(corners1)
+    print(corners1[:,0] == corners1[0, 0])
     if corners1.sum() == 0 or corners2.sum() == 0 or np.all(corners1[:,0] == corners1[0, 0]) or np.all(corners1[:,1] == corners1[0,1]) or np.all(corners1[:,2] == corners1[0, 2]):
         return 0, 0
     rect1 = [(corners1[i,0], corners1[i,2]) for i in range(3,-1,-1)]
