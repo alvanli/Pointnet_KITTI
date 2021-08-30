@@ -34,8 +34,8 @@ def get_bounding_box(points, target):
     # points: [3, n], target: [n]
     pts_np, targ_np = points.data.cpu().numpy(), target.data.cpu().numpy()
     obj = pts_np[:2, targ_np == 1]
-    if obj.sum() == 0:
-       return 0, np.zeros((8,3))
+    if obj.shape[1] == 0 or obj.sum() == 0:
+        return 0, np.zeros((8, 3))
     rect = cv2.minAreaRect(obj.transpose())
     box = cv2.boxPoints(rect)
     box = np.concatenate((box, box), axis=0)
